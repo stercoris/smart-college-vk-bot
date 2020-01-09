@@ -24,13 +24,16 @@ import subprocess
 import sys
 import hltv 
 
-print("aaa") 
+subprocess.Popen([sys.executable, 'mailing.py'])
 
-for Player in hltv.top_players():
-    print(f"{(Player['nickname']).decode()} {Player['name']}")
-vk = vk_api.VkApi(token="c5eff1b045b1c04f154d9255e57bef5224af5f21cd2dad94394f21bb3378eb014ee59b5fb2dbc5a83160b")
+Top30 = hltv.top30teams()
+for result in hltv.get_results():
+    for Top30Team in  Top30:
+        if ((result["team1"]).decode() == Top30Team["name"]) or ((result["team2"]).decode() == Top30Team["name"]):
+            print(result)
+vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
 longpoll = vk_api.bot_longpoll.VkBotLongPoll(vk, "184728287")
-
+base.UpdateGroups()
 nl = '\n'
 
 ZvonKi = '1 : 8:30 - 10:00 ' + nl + '2 : 10:20 - 11:50' + nl + '3 : 12:20 - 13:50' + nl + '4 : 14:00 - 15:30' + nl + '5 : 15:40 - 17:10'
@@ -179,14 +182,14 @@ def ReRoll():
                         #--------------Установка группы пользователя---------------------#
                         elif base.GetGroupId(userid) == "1":
                             print("--- Указание группы ---")
-                            GroupName = tpc.GetGroup(text)
-                            print("Получение id группы по названию : " + str(GroupName))
-                            if int(GroupName) == 0:
+                            GroupID = base.GetGroupByName(text.lower())
+                            print("Получение id группы по названию : " + str(GroupID))
+                            if int(GroupID) == 0:
                                 print("Группа не найдена")
                                 send(userid,"Такой группы в базе нет")
                             else:
-                                print("Группа найдена :" + text + ", " + str(GroupName))
-                                base.SetGroup(userid,text,str(GroupName))
+                                print("Группа найдена :" + text + ", " + str(GroupID))
+                                base.SetGroup(userid,text,str(GroupID))
                                 send(userid,"Успешно",KeyboardMain)
                             continue
                         #----------------------------------------------------------------#
@@ -219,7 +222,7 @@ def ReRoll():
                                     send(userid,tpc.GetExams(base.GetGroupId(userid)))
                                 else:
                                     GoToMainMenu(userid)
-
+                                    ё
                             
                     if event.from_chat:
                         if text[0:3] == "!по" or text[0:3] == "!вт" or text[0:3] == "!ср" or text[0:3] == "!чт" or text[0:3] == "!пя":

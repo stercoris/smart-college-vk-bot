@@ -5,12 +5,13 @@ from lxml import html
 from lxml import etree
 import lxml.html
 import time
+import re
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 conn = sqlite3.connect('tpc.db')
 cursor = conn.cursor()
 
-vk = vk_api.VkApi(token="a69d07ca1fa3629f95c65143fb4c7449a9fc187bddda97e2a7661a518c5d2190b28a24f0b378740a4c103")
+vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
  
 
 #Новый пользователь
@@ -23,7 +24,7 @@ def AddToUserList(VkId):
     try:
         SecondName = User[0]["last_name"]
     except:
-        SecondName = ""
+        SecondName = " "
     NewUser = (
         (str(VkId),), 
         (str(Name),), 
@@ -182,11 +183,74 @@ def UpdateTeachers():
     Count = parsed_body.xpath(Count)
     print(Count)
     for i in range(len(Count)):
-        NewUser = (
-        (str(VkId),), 
-        (str(Name),), 
-        (str(SecondName),)
-        )
-        command = "INSERT OR IGNORE INTO Teachers (VkId, Name , SecondName) VALUES (?,?,?);"
-        cursor.execute(command,(str(VkId),str(Name),str(SecondName)))
-        conn.commit()
+        TeacherName = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/text()"
+        TeacherID =  f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/@value"
+        print(parsed_body.xpath(TeacherName))
+        print(parsed_body.xpath(TeacherID))
+
+# GROUPS 
+def AddToGroupName(GroupName,secname, id):
+    command = f"CREATE TABLE IF NOT EXISTS 'Groups' ( 'Group' TEXT NOT NULL UNIQUE)"
+    cursor.execute(command)
+    conn.commit()
+    command = f"INSERT OR IGNORE INTO Groups ('Group') VALUES ('{GroupName}')"
+    cursor.execute(command)
+    conn.commit()
+    command = f"CREATE TABLE  IF NOT EXISTS '{GroupName}' ( 'SecName'	TEXT NOT NULL, 'id'	TEXT NOT NULL , UNIQUE(SecName, id))"
+    cursor.execute(command)
+    conn.commit()
+    command = f"INSERT OR IGNORE INTO {GroupName} (SecName , id ) VALUES ('{secname}' , '{id}')"
+    cursor.execute(command)
+    conn.commit()
+    command = f"UPDATE {GroupName} SET  id = '{id}' Where SecName = '{secname}'"
+    cursor.execute(command)
+    conn.commit()
+
+def UpdateGroups():
+    url = "http://www.tpcol.ru/asu/timetablestud.php?f=0"
+    response  = requests.get(url)
+    response.encoding = 'cp1251'
+    parsed_body = html.fromstring(response.text)
+    Count = "/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option"
+    Count = parsed_body.xpath(Count)
+    for i in range(len(Count)):
+        if(i == 1 or i == 0):
+            continue
+        GroupNameAndId = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/text()"
+        GroupId =  f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/@value"
+        GroupNameAndId = (parsed_body.xpath(GroupNameAndId))
+        GroupId = (parsed_body.xpath(GroupId))
+        GroupName = ((GroupNameAndId[0]).split("-"))[0]
+        SecName = ((GroupNameAndId[0]).split("-"))[1]
+        print("MainName: " + GroupName.lower() + "   SubName: " +  SecName + " ID: " + GroupId[0])
+        GroupId = GroupId[0].replace(' ', '').lower()
+        GroupName = GroupName.replace(' ', '').lower()
+        SecName = SecName.replace(' ', '').lower()
+
+        if(GroupName == "зст" or GroupName == "зтм"):
+            continue
+        AddToGroupName(GroupName, SecName ,  GroupId)
+def GetGroupByName(Group):
+    s  = Group
+    for d in '1234567890-':
+        s=s.replace(d, '')
+        s.strip(' ')
+    while s.find(' ') != -1:
+        s = s.replace(' ', '')
+    GroupMN = s.lower()
+    s  = Group
+    GroupSecN = re.sub(r'[^0-9]+', r'', s)
+    command = f"SELECT * FROM Groups"
+    cursor.execute(command)
+    id = 0
+    groups = cursor.fetchall()
+    for DBgroup in groups:
+        if(DBgroup[0] == GroupMN):
+            command = f"SELECT SecName , id FROM {DBgroup[0]}"
+            cursor.execute(command)
+            SecNames = cursor.fetchall()
+            for SecName in SecNames:
+                if(SecName[0] == GroupSecN):
+                    id = SecName[1]
+                    return(id)
+    return(id)

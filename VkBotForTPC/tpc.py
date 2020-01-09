@@ -21,7 +21,7 @@ import re
 import traceback
 import sqlite3
 
-vk = vk_api.VkApi(token="a69d07ca1fa3629f95c65143fb4c7449a9fc187bddda97e2a7661a518c5d2190b28a24f0b378740a4c103")
+vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
 
 
 def GetLession(group, day, week):
@@ -155,7 +155,7 @@ def GetLession(group, day, week):
         return("Расписания на этот день нет")
     return(Lessions)
 
-vk = vk_api.VkApi(token="a5d300e579ead5f90b3479e83719026b248f63a703776f8168a631b38a02f4f7d2e863ae245ba95a32a60")
+vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
  
 
 
@@ -318,16 +318,5 @@ def GetButton(label, color, payload=""):
         "color": color
         }
 
-def GetGroup(GroupName):
-    try:
-        for i in range(len(groups)):
-                GroupName = GroupName.lower()
-                if (GroupName.find(groups[i][0][0]) != -1):
-                    for n in range(1,len(groups[i])):
-                        if GroupName.find(groups[i][n][0]) != -1:
-                            return(groups[i][n][1])
-        return(0)
-    except:
-        return(0)
 
 
