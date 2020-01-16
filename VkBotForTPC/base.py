@@ -8,7 +8,7 @@ import time
 import re
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
-conn = sqlite3.connect('tpc.db')
+conn = sqlite3.connect('tpc.db',check_same_thread=False)
 cursor = conn.cursor()
 
 vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
@@ -68,7 +68,7 @@ def GetGroupId(VkId):
     cursor.execute(command)
     results = cursor.fetchall()
     if results:
-        return(results[0][0])
+        return(int(results[0][0]))
     else:
         return(False)
 
@@ -100,16 +100,6 @@ def UnSubToSchedule(VkId):
     command = f"UPDATE VkUsers SET SubToSchedule = 0 WHERE VkId = '{str(VkId)}'"
     cursor.execute(command)
     conn.commit()
-
-def ScheduleDialogStage(VkId, DialogStage):
-    command = f"UPDATE VkUsers SET ScheduleDialogStage = {int(DialogStage)} WHERE VkId = '{str(VkId)}'"
-    cursor.execute(command)
-    conn.commit()
-
-def GetScheduleDialogStage(VkId):
-    command = f"SELECT ScheduleDialogStage FROM VkUsers WHERE VkId = {VkId}"
-    cursor.execute(command)
-    return(cursor.fetchone()[0])
 
 def GetSubToSchedule(VkId):
     command = f"SELECT SubToSchedule FROM VkUsers WHERE VkId = {VkId}"
@@ -174,19 +164,85 @@ def YearOfBirth(Year,VkId):
 
 #TEACHERS
 
+def SetTeacherId(VkId,TeacherID):
+    command = f"UPDATE VkUsers SET TeacherID = {TeacherID} WHERE VkId = '{str(VkId)}'"
+    cursor.execute(command)
+    conn.commit()
+
+def GetTeacherId(VkId):
+    command = f"SELECT TeacherID FROM VkUsers WHERE VkId = {VkId}"
+    cursor.execute(command)
+    results = cursor.fetchall()
+    if results:
+        return(results[0][0])
+    else:
+        return(False)
+
 def UpdateTeachers():
     url = "http://www.tpcol.ru/asu/timetableprep.php?f=1"
     response  = requests.get(url)
     response.encoding = 'cp1251'
     parsed_body = html.fromstring(response.text)
-    Count = "/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[1]//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option/@value"
+    Count = "/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option"
     Count = parsed_body.xpath(Count)
-    print(Count)
+    previosname = ""
     for i in range(len(Count)):
-        TeacherName = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/text()"
+        if(i == 1 or i == 0):
+            continue
+        TeacherNameAndID = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/text()"
         TeacherID =  f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i)}]/@value"
-        print(parsed_body.xpath(TeacherName))
-        print(parsed_body.xpath(TeacherID))
+        TeacherNameAndID = (parsed_body.xpath(TeacherNameAndID))
+        TeacherID = (parsed_body.xpath(TeacherID))
+        TeacherSecondName = ((TeacherNameAndID[0]).split(" "))[0]
+        NextSecondName = (parsed_body.xpath(f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr[2]/td/table//tr/td[2]/form/table//tr[1]/td[2]/select/option[{str(i+1)}]/text()"))[0].split(" ")[0]
+        TeacherName = ((TeacherNameAndID[0]).split(" "))[1]
+        TeacherID = TeacherID[0].replace(' ', '')
+        TeacherSecondName = TeacherSecondName.replace(' ', '')
+        if previosname == TeacherSecondName or TeacherSecondName == NextSecondName:
+            previosname = TeacherSecondName
+            TeacherSecondName = TeacherSecondName + f" ({TeacherName})"
+        else: 
+            previosname = TeacherSecondName
+        print("TeacherSecondName: " + TeacherSecondName + "   TeacherID: " +  TeacherID)
+        AddToTeachersList(TeacherSecondName,TeacherID)
+
+def AddToTeachersList(TeacherName,TeacherID):
+    #TeacherList
+    command = f"CREATE TABLE IF NOT EXISTS 'Teachers' ( 'Teacher' TEXT NOT NULL UNIQUE , 'Id'   INTEGER NOT NULL UNIQUE)"
+    cursor.execute(command)
+    conn.commit()
+    command = f"INSERT OR IGNORE INTO Teachers ('Teacher','Id') VALUES ('{TeacherName}','{TeacherID}')"
+    cursor.execute(command)
+    conn.commit()
+    #TeacherList
+
+def GetTeachersByFirstL(FirstLetter):
+    command = f"SELECT * FROM 'Teachers'"
+    cursor.execute(command)
+    Teachers = cursor.fetchall()
+    TeacherList = list()
+    for Teacher in Teachers:
+        if ((Teacher[0])[0:1]).lower() == FirstLetter.lower():
+            TeacherList.append([Teacher[0],Teacher[1]],)
+    if len(TeacherList) == 0:
+        print("Учителя не найдены")
+        return(0)
+    print("Учителя по 1 букве " + str(TeacherList))
+    return(TeacherList)
+
+def GetTeachersBySName(SecondName):
+    command = f"SELECT * FROM 'Teachers'"
+    cursor.execute(command)
+    Teachers = cursor.fetchall()
+    TeacherList = list()
+    for Teacher in Teachers:
+        if (Teacher[0]).lower() == SecondName.lower():
+            TeacherList.append((Teacher[0],Teacher[1]),)
+    if len(TeacherList) == 0:
+        print("Учитель не найден")
+        return(0)
+    print("Учителb по SNam'y " + str(TeacherList))
+    return(TeacherList)
 
 # GROUPS 
 def AddToGroupName(GroupName,secname, id):
@@ -230,6 +286,7 @@ def UpdateGroups():
         if(GroupName == "зст" or GroupName == "зтм"):
             continue
         AddToGroupName(GroupName, SecName ,  GroupId)
+
 def GetGroupByName(Group):
     s  = Group
     for d in '1234567890-':
@@ -244,13 +301,29 @@ def GetGroupByName(Group):
     cursor.execute(command)
     id = 0
     groups = cursor.fetchall()
+    i = 0
+    GRinam = ""
     for DBgroup in groups:
-        if(DBgroup[0] == GroupMN):
-            command = f"SELECT SecName , id FROM {DBgroup[0]}"
-            cursor.execute(command)
-            SecNames = cursor.fetchall()
-            for SecName in SecNames:
-                if(SecName[0] == GroupSecN):
-                    id = SecName[1]
-                    return(id)
+        if(DBgroup[0] in GroupMN and DBgroup[0] >= GRinam):
+            i = 1
+            GRinam = DBgroup[0]
+    if(i >= 1):
+        command = f"SELECT SecName , id FROM {GRinam}"
+        cursor.execute(command)
+        SecNames = cursor.fetchall()
+        for SecName in SecNames:
+            if(SecName[0] == GroupSecN):
+                id = SecName[1]
+                return(id)
     return(id)
+
+# User Types: 
+def SetUserType(VkId, UserType):
+    command = f"UPDATE VkUsers SET UserType = {int(UserType)} WHERE VkId = '{str(VkId)}'"
+    cursor.execute(command)
+    conn.commit()
+
+def GetUserType(VkId):
+    command = f"SELECT UserType FROM VkUsers WHERE VkId = {VkId}"
+    cursor.execute(command)
+    return(cursor.fetchone()[0])

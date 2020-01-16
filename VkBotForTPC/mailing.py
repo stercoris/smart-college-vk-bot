@@ -64,7 +64,7 @@ def MailingEvening():
 
 
             
-schedule.every().day.at("07:30").do(MailingMorning)
+schedule.every().day.at("07:00").do(MailingMorning)
 schedule.every().day.at("20:00").do(MailingEvening)
 
 tpc.send(297621144,"Клиент запущен")

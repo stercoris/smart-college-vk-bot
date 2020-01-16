@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 import re
 import traceback
 import sqlite3
+import base
 
 vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
 
@@ -155,6 +156,171 @@ def GetLession(group, day, week):
         return("Расписания на этот день нет")
     return(Lessions)
 
+def GetTeacherLession(group, day, week):
+    if day > 7:
+        day-=7
+    Today = datetime.today().weekday() + 1
+    print(f"Today : {Today}")
+    if Today > 7:
+        Today = Today - 7
+    Tomorrow = datetime.today().weekday() + 2
+    if Tomorrow > 7:
+        Tomorrow = Tomorrow - 7
+    print(f"Tomorrow : {Tomorrow}")
+    url = "http://www.tpcol.ru/asu/timetableprep.php?f=1"
+    values = {'fio': group,
+              'day': day,
+              'week' : week}
+    response  = requests.post(url, data=values)
+    response.encoding = 'cp1251'
+    parsed_body = html.fromstring(response.text)
+    rasp,zamtood = True,True
+    for head in parsed_body.xpath("/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table//tr/td[@class='head3']/text()"):
+        head = "".join(head)
+        if "расписания нет!" in head:
+            print("Нет расписания на сегодня")
+            rasp = False
+        elif ("нет" in head) and ("сегодня" in head):
+            print("Нет замен на сегодня")
+            zamtood = False
+    if (rasp == False) and (zamtood == False):
+        zamtood = 3
+    elif ((rasp == False) and (zamtood == True)) or ((rasp == True) and (zamtood == False)):
+        zamtood = 4
+    elif (zamtood == True) and (rasp == True):
+        zamtood = 5
+    #Лекции сегодня
+    LessionIdArray = []
+    LessionArray = []
+    GroupsArray = []
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{3}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[1]/text()"
+        LessionId = "".join(parsed_body.xpath(link))
+        if LessionId == "":
+            continue
+        LessionId = re.sub(" +", "", LessionId)
+        LessionId = re.sub("\xa0+", "", LessionId)
+        LessionIdArray.append(LessionId)
+    print("ИД занятий : " + str(LessionIdArray))
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{3}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[2]/text()"
+        Group = "".join(parsed_body.xpath(link))
+        if Group == "":
+            continue
+        Group = re.sub(" +", " ", Group)
+        Group = re.sub("\xa0+", " ", Group)
+        GroupsArray.append(Group)
+    print("Группы : " + str(GroupsArray))
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{3}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[3]/text()"
+        Lession = "".join(parsed_body.xpath(link))
+        if Lession == "":
+            continue
+        Lession = re.sub(" +", " ", Lession)
+        Lession = re.sub("\xa0+", " ", Lession)
+        LessionArray.append(Lession)
+    print("Занятия : " + str(LessionArray))
+    #Заменый сегодня
+    ZamenaTodayIdArray = []
+    ZamenaTodayArray = []
+    ZamenaTodayGroupsArray = []
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{zamtood}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[1]/text()"
+        ZamenaTodayId = "".join(parsed_body.xpath(link))
+        if ZamenaTodayId == "":
+            continue
+        ZamenaTodayId = re.sub(" +", "", ZamenaTodayId)
+        ZamenaTodayId = re.sub("\xa0+", "", ZamenaTodayId)
+        ZamenaTodayIdArray.append(ZamenaTodayId)
+    print("Замены ИД сегодня : " + str(ZamenaTodayIdArray))
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{zamtood}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[2]/text()"
+        ZamenaTodayGroup = "".join(parsed_body.xpath(link))
+        if ZamenaTodayGroup == "":
+            continue
+        ZamenaTodayGroup = re.sub(" +", " ", ZamenaTodayGroup)
+        ZamenaTodayGroup = re.sub("\xa0+", " ", ZamenaTodayGroup)
+        ZamenaTodayGroupsArray.append(ZamenaTodayGroup)
+    print("Группы(замены сегодня) : " + str(ZamenaTodayGroupsArray))
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{zamtood}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[3]/text()"
+        ZamenaToday = "".join(parsed_body.xpath(link))
+        if ZamenaToday == "":
+            continue
+        ZamenaToday = re.sub(" +", " ", ZamenaToday)
+        ZamenaToday = re.sub("\xa0+", " ", ZamenaToday)
+        ZamenaTodayArray.append(ZamenaToday)
+    print("Замены сегодня : " + str(ZamenaTodayArray))
+    #Заменый завтра
+    ZamenaTomorrowIdArray = []
+    ZamenaTomorrowArray = []
+    ZamenaTomorrowGroupArray = []
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{zamtood+2}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[1]/text()"    
+        ZamenaTomorrowId = "".join(parsed_body.xpath(link))
+        if ZamenaTomorrowId == "":
+            continue
+        ZamenaTomorrowId = re.sub(" +", "", ZamenaTomorrowId)
+        ZamenaTomorrowId = re.sub("\xa0+", "", ZamenaTomorrowId)
+        ZamenaTomorrowIdArray.append(ZamenaTomorrowId)
+    print("Замены ИД Завтра : " + str(ZamenaTomorrowIdArray))
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{zamtood+2}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[2]/text()"
+        ZamenaTomorrowGroup = "".join(parsed_body.xpath(link))
+        if ZamenaTomorrowGroup == "":
+            continue
+        ZamenaTomorrowGroup = re.sub(" +", " ", ZamenaTomorrowGroup)
+        ZamenaTomorrowGroup = re.sub("\xa0+", " ", ZamenaTomorrowGroup)
+        ZamenaTomorrowGroupArray.append(ZamenaTomorrowGroup)
+    print("Группы(замены сегодня) : " + str(ZamenaTomorrowGroupArray))
+    for i in range(1,8):
+        link = f"/html/body/table//tr[1]/td[2]/table[2]//tr[1]/td[2]/table//tr/td/table[{zamtood+2}]//tr/td[2]/table//tr[1]/td[2]/table//tr[@class='ttext'][{i}]/td[3]/text()"
+        ZamenaTomorrow = "".join(parsed_body.xpath(link))
+        if ZamenaTomorrow == "":
+            continue
+        ZamenaTomorrow = re.sub(" +", " ", ZamenaTomorrow)
+        ZamenaTomorrow = re.sub("\xa0+", " ", ZamenaTomorrow)
+        ZamenaTomorrowArray.append(ZamenaTomorrow)
+    #Сортировка
+    print("Замены Завтра : " + str(ZamenaTomorrowArray))
+    Les = {}
+    for i in range(len(LessionIdArray)):
+            Les[LessionIdArray[i]] = GroupsArray[i] + " - " + LessionArray[i]
+    print(Les)   
+    print("День : " + str(day))
+    if day == Today:
+        print("Замены сегодня")
+        Zamena = list(ZamenaTodayIdArray)
+        for i in range(len(Zamena)):
+            if Zamena[i] not in Les:
+                Les[Zamena[i]] = "----------"
+            print(f"'{Les[Zamena[i]]}' = Заменен = '{ZamenaTodayArray[i]}'")
+            Les[Zamena[i]] = ZamenaTodayGroupsArray[i] + " - " + ZamenaTodayArray[i]
+    if day == Tomorrow:
+        Zamena = list(ZamenaTomorrowIdArray)
+        print("Замены завтра")
+        for i in range(len(Zamena)):
+            if Zamena[i] not in Les:
+                Les[Zamena[i]] = "----------"
+            print(f"'{Les[Zamena[i]]}'  = Заменен =  '{ZamenaTomorrowArray[i]}'")
+            Les[Zamena[i]] = ZamenaTomorrowGroupArray[i] + " - " + ZamenaTomorrowArray[i] 
+    print(Les)
+    Lessions = ""
+    Keys = list(Les.keys())
+    try:
+        Start = min(Keys)
+    except:
+        Start = 1;
+    try:
+        End = max(Keys)
+    except:
+        End = 0;
+    for i in range(int(Start),int(End) + 1):
+        Lessions = Lessions + f"{i} : {Les.get(str(i), '--------------')}" + "\n"
+    if Lessions == "":
+        return("Расписания на этот день нет")
+    return(Lessions)
+
 vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
  
 
@@ -221,7 +387,7 @@ def GetChat(chat_id):
         return("556")
     try: 
         ChatName = a["items"][0]["chat_settings"]["title"]
-        return(GetGroup(ChatName))
+        return(base.GetGroupByName(ChatName))
     except:
         return("556")
                     
@@ -248,65 +414,6 @@ def GetWeekColor():
             return("0")
         return("1")
 
-groups = [[
-        ["вп"],
-        ["11","580"],
-        ["21","556"],
-        ["31","538"]
-    ],
-    [
-        ["тп"],
-        ["21","566"],
-        ["31","541"],
-        ["41","524"]
-    ],
-    [
-        ["ад"],
-        ["21","561"],
-        ["31","532"],
-        ["41","519"]
-    ],
-    [
-        ["вд"],
-        ["11","588"],
-        ["21","564"],
-        ["31","535"],
-        ["32","536"],
-        ["41","522"]
-    ],
-    [
-        ["тд"],
-        ["11","577"],
-        ["21","553"]
-    ],
-    [
-        ["ст"],
-        ["11","586"],
-        ["12","587"],
-        ["21","562"],
-        ["22","563"],
-        ["31","533"],
-        ["32","534"],
-        ["41","520"],
-        ["42","521"]
-    ],
-    [
-        ["тм"],
-        ["11","584"],
-        ["12","585"],
-        ["13","525"],
-        ["14","549"],
-        ["21","559"],
-        ["22","560"],
-        ["31","539"],
-        ["32","540"],
-        ["41","517"],
-        ["42","518"]
-    ],
-    [
-        ["вс"],
-        ["11","575"]
-    ]]
 
 def GetButton(label, color, payload=""):
     return{
