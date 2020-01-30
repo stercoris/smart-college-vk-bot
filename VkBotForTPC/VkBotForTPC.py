@@ -36,25 +36,46 @@ vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732b
 longpoll = vk_api.bot_longpoll.VkBotLongPoll(vk, "184728287")
 # Авторизация ВК
 
-time.sleep(3)
-
-
 #Обновленя БД
 print("========================================================== ")
 print("== Обновление БД Учителей начато == ")
-#base.UpdateTeachers()
+base.UpdateTeachers()
 print("== Обновление БД Учителей завершено == ")
 print("========================================================== ")
 print("== Обновление БД Групп начато == ")
-#base.UpdateGroups()
+base.UpdateGroups()
 print("== Обновление БД Групп завершено == ")
 print("========================================================== ")
 #Обновленя БД
 
+error = ["Ашибка", "Еррор", "Ошибка", "Оплошность","просчет"]
+admin = ["ніяк, прав немає" , "Прав нет да", "Прав а", "Можно права?", "Никак","Дайб прав"]
 
+Rasp = ("подписаться","отписаться","опции","сегодня","завтра","экзамены","расписание")
 nl = '\n'
 ZvonKi = '1 : 8:30 - 10:00 ' + nl + '2 : 10:20 - 11:50' + nl + '3 : 12:20 - 13:50' + nl + '4 : 14:00 - 15:30' + nl + '5 : 15:40 - 17:10'
 
+#Keyboards
+def get_func_key(userid):
+    if(base.GetSubToSchedule(userid) == 1):
+        subcont = "Отписаться"
+    else:
+        subcont = "Подписаться"
+
+        
+    KeyboardSubToSchedule = {
+        "one_time": False,
+        "buttons" : [
+                [tpc.GetButton(label = "Сегодня",color="default"),
+                 tpc.GetButton(label = "Завтра",color="default")],
+                [tpc.GetButton(label = subcont,color="default"),
+                tpc.GetButton(label = "Экзамены",color="default")],
+                [tpc.GetButton(label = "Главное меню",color="negative")]
+            ]
+        }
+    KeyboardSubToSchedule = json.dumps(KeyboardSubToSchedule, ensure_ascii=False).encode("utf-8")
+    KeyboardSubToSchedule = str(KeyboardSubToSchedule.decode("utf-8"))
+    return(KeyboardSubToSchedule)
 
 def GetMembersOfConv(id):
     try:
@@ -119,7 +140,7 @@ def photo(user_id):
 
 def GetMainKeyboard(userid):
     print(base.GetGroupId(userid))
-    if base.GetGroupId(userid) == "1":
+    if base.GetGroupId(userid) == 1:
         GroupB = tpc.GetButton(label = "Отмена",color="negative")
     else: 
         GroupB = tpc.GetButton(label = "Группа",color="default")
@@ -138,18 +159,10 @@ def GetMainKeyboard(userid):
     KeyboardMain = str(KeyboardMain.decode("utf-8"))
     return(KeyboardMain)
 
-KeyboardGroup = {
-    "one_time": False,
-    "buttons" : [
-            [tpc.GetButton(label = "Установить группу",color="default")],
-            [tpc.GetButton(label = "Главное меню",color="negative")]
-        ]
-    }
-KeyboardGroup = json.dumps(KeyboardGroup, ensure_ascii=False).encode("utf-8")
-KeyboardGroup = str(KeyboardGroup.decode("utf-8"))
+
 
 def GoToMainMenu(userid):
-    if base.GetGroupId(userid) == "1":
+    if base.GetGroupId(userid) == 1:
         base.SetGroupId(userid,0)
     if base.GetTeacherId == 1 or base.GetTeacherId == 2:
         base.SetTeaxherId(userid,0)
@@ -179,24 +192,8 @@ def GetTeachersKeyboard(letter):
     TeaherKeyboard = str(TeaherKeyboard.decode("utf-8"))
     return(TeaherKeyboard)
 
-KeyboardSubToSchedule = {
-    "one_time": False,
-    "buttons" : [
-            [tpc.GetButton(label = "Сегодня",color="default"),
-             tpc.GetButton(label = "Завтра",color="default")],
-            [tpc.GetButton(label = "Подписаться",color="default"),
-            tpc.GetButton(label = "Отписаться",color="default")],
-            [tpc.GetButton(label = "Экзамены",color="default"),
-            tpc.GetButton(label = "Главное меню",color="negative")]
-        ]
-    }
-KeyboardSubToSchedule = json.dumps(KeyboardSubToSchedule, ensure_ascii=False).encode("utf-8")
-KeyboardSubToSchedule = str(KeyboardSubToSchedule.decode("utf-8"))
 
-error = ["Ашибка", "Еррор", "Ошибка", "Оплошность","просчет"]
-admin = ["ніяк, прав немає" , "Прав нет да", "Прав а", "Можно права?", "Никак","Дайб прав"]
-GetTeachersKeyboard("а")
-Rasp = ("подписаться","отписаться","опции","сегодня","завтра","экзамены","расписание")
+
 
 def CsGoSort(text):
     for Team in hltv.top30teams():
@@ -204,18 +201,19 @@ def CsGoSort(text):
             print(f"Выбранная команда : {Team['name']}")
             Matches = hltv.get_matches()
             Results = hltv.get_results()
-            Message = "Матчи : \n"
+            Message = "     Матчи : \n".upper()
             for match in Matches: 
                  if(match["team1"] == None):
                     continue
                  if ((match["team1"]).decode() == Team["name"]) or ((match["team2"]).decode() == Team["name"]):
-                     Message+= f"======\n{match}\n======\n"
-            Message+= f"Результаты :\n"
+                     Message+= f"------------\nДата : {(match['date']).decode()}\nМатч : '{(match['team1']).decode()}' vs '{(match['team2']).decode()}'\nEvent : {(match['event']).decode()}\n"
+            Message+= f"------------\n    Результаты :\n".upper()
             for result in Results:
+                 print(result)
                  if(result["team1"] == None):
                     continue
                  if ((result["team1"]).decode() == Team["name"]) or ((result["team2"]).decode() == Team["name"]):
-                     Message+= f"======\n{result}\n======\n"
+                     Message+= f"------------\nДата : {(result['date']).decode()}\nМатч : '{(result['team1']).decode()}' vs '{(result['team2']).decode()}'\nEvent : {(result['event']).decode()}\nСчет : {(result['team1score'])} -- {(result['team2score'])}\n"
             return(Message)
             break
 
@@ -321,12 +319,12 @@ def VkChecking(event):
                             if UserGroup != 0:
                                 if text == "подписаться":
                                         base.SubToSchedule(userid)
-                                        send(userid,"Вы успешно подписались",GetMainKeyboard(userid))
+                                        send(userid,"Вы успешно подписались",get_func_key(userid))
                                 elif text == "отписаться":
                                         base.UnSubToSchedule(userid)
-                                        send(userid,"Вы отписались",GetMainKeyboard(userid))
+                                        send(userid,"Вы отписались",get_func_key(userid))
                                 elif text == "опции":
-                                    send(userid,"Выберите опцию",KeyboardSubToSchedule)
+                                    send(userid,"Выберите опцию",get_func_key(userid))
                                 elif text == "завтра":
                                     send(userid,tpc.GetLession(base.GetGroupId(userid),datetime.today().weekday() + 2,tpc.GetWeekColor()))
                                 elif text == "сегодня":
@@ -340,12 +338,12 @@ def VkChecking(event):
 
                                 if text == "подписаться":
                                         base.SubToSchedule(userid)
-                                        send(userid,"Вы успешно подписались",GetMainKeyboard(userid))
+                                        send(userid,"Вы успешно подписались",get_func_key(userid))
                                 elif text == "отписаться":
                                         base.UnSubToSchedule(userid)
-                                        send(userid,"Вы отписались",GetMainKeyboard(userid))
+                                        send(userid,"Вы отписались",get_func_key(userid))
                                 elif text == "опции":
-                                        send(userid,"Выберите опцию",KeyboardSubToSchedule)
+                                        send(userid,"Выберите опцию",get_func_key(userid))
                                 elif text == "завтра":
                                          send(userid,tpc.GetTeacherLession(base.GetTeacherId(userid),datetime.today().weekday() + 2,tpc.GetWeekColor()))
                                 elif text == "сегодня":
