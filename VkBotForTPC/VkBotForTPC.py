@@ -213,7 +213,11 @@ def CsGoSort(text):
                  if(result["team1"] == None):
                     continue
                  if ((result["team1"]).decode() == Team["name"]) or ((result["team2"]).decode() == Team["name"]):
-                     Message+= f"------------\nДата : {(result['date']).decode()}\nМатч : '{(result['team1']).decode()}' vs '{(result['team2']).decode()}'\nEvent : {(result['event']).decode()}\nСчет : {(result['team1score'])} -- {(result['team2score'])}\n"
+                     try:
+                         date = (match['date']).decode()
+                     except:
+                         date = match['date']
+                     Message+= f"------------\nДата : {date}\nМатч : '{(result['team1']).decode()}' vs '{(result['team2']).decode()}'\nEvent : {(result['event']).decode()}\nСчет : {(result['team1score'])} -- {(result['team2score'])}\n"
             return(Message)
             break
 
