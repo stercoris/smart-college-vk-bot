@@ -25,11 +25,6 @@ def AddToUserList(VkId):
         SecondName = User[0]["last_name"]
     except:
         SecondName = " "
-    NewUser = (
-        (str(VkId),), 
-        (str(Name),), 
-        (str(SecondName),)
-        )
     command = "INSERT OR IGNORE INTO VkUsers (VkId, Name , SecondName) VALUES (?,?,?);"
     cursor.execute(command,(str(VkId),str(Name),str(SecondName)))
     conn.commit()

@@ -26,9 +26,7 @@ import sys
 import hltv 
 
 
-# Запуск рассылки
-subprocess.Popen([sys.executable, 'mailing.py'])
-# Запуск рассылки
+
 
 
 # Авторизация ВК
@@ -47,6 +45,10 @@ base.UpdateGroups()
 print("== Обновление БД Групп завершено == ")
 print("========================================================== ")
 #Обновленя БД
+
+# Запуск рассылки
+subprocess.Popen([sys.executable, 'mailing.py'])
+# Запуск рассылки
 
 error = ["Ашибка", "Еррор", "Ошибка", "Оплошность","просчет"]
 admin = ["ніяк, прав немає" , "Прав нет да", "Прав а", "Можно права?", "Никак","Дайб прав"]
@@ -118,25 +120,13 @@ def isadmin(sendid,userid):
 
 def iskyamran(userid,sendid):
     try:
-        a = GetMembersOfConv(sendid)
+        GetMembersOfConv(sendid)
         return(True)
     except vk_api.exceptions.ApiError:
         if userid == 271961752:
             time.sleep(2)
             return(False)
         return(True)
-
-def photo(user_id):
-    a = vk.method("photos.getMessagesUploadServer")
-    b = requests.post(a['upload_url'], files={'photo': open("screenshot.png", 'rb')}).json()
-    c = vk.method('photos.saveMessagesPhoto', {'photo': b['photo'], 'server': b['server'], 'hash': b['hash']})[0]
-    d = "photo{}_{}".format(c["owner_id"], c["id"])
-    vk.method("messages.send",   {
-                "peer_id": user_id,
-                "message": " ",
-                "attachment": f'photo{c["owner_id"]}_{c["id"]}',
-                "random_id": random.randint(1, 9999999999999999)
-                })
 
 def GetMainKeyboard(userid):
     print(base.GetGroupId(userid))
@@ -165,7 +155,7 @@ def GoToMainMenu(userid):
     if base.GetGroupId(userid) == 1:
         base.SetGroupId(userid,0)
     if base.GetTeacherId == 1 or base.GetTeacherId == 2:
-        base.SetTeaxherId(userid,0)
+        base.SetTeacherId(userid,0)
     send(userid,"Выберите опцию",GetMainKeyboard(userid))
 
 def GetTeachersKeyboard(letter):
@@ -219,7 +209,6 @@ def CsGoSort(text):
                          date = match['date']
                      Message+= f"------------\nДата : {date}\nМатч : '{(result['team1']).decode()}' vs '{(result['team2']).decode()}'\nEvent : {(result['event']).decode()}\nСчет : {(result['team1score'])} -- {(result['team2score'])}\n"
             return(Message)
-            break
 
 
 
@@ -230,7 +219,7 @@ def VkChecking(event):
 
             # Проверка соединения  / Запрос к ВК
             try:
-                XKPS = vk.method("users.get",  {"user_ids": "297621144",}) #Херь , которая поддерживает соединение
+                vk.method("users.get",  {"user_ids": "297621144",}) #Херь , которая поддерживает соединение
             except:
                 print(("=== Соединение восстановленно ===").upper())
             # Проверка соединения  / Запрос к ВК
@@ -508,7 +497,6 @@ def VkChecking(event):
                                 sendm = "Проиграл - " + first_name + " " + last_name
                                 send(fromid,sendm)
                                 break
-                                time.sleep(5)
                             except vk_api.exceptions.ApiError:
                                 time.sleep(5)
                                 sendm = "Програв - " + first_name + " " + last_name + ".Але він є адміністратором або творцем каналу."

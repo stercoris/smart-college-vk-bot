@@ -25,7 +25,8 @@ import base
 vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
 
 
-def GetLession(group, day, week):
+
+def GetLession(group, day, week,w_pari=""):
     if day > 7:
         day-=7
     Today = datetime.today().weekday() + 1
@@ -40,7 +41,10 @@ def GetLession(group, day, week):
     values = {'group': group,
               'day': day,
               'week' : week}
-    response  = requests.post(url, data=values)
+    try:
+        response  = requests.post(url, data=values)
+    except:
+        return("")
     response.encoding = 'cp1251'
     parsed_body = html.fromstring(response.text)
     LessionIdArray = []
@@ -145,15 +149,18 @@ def GetLession(group, day, week):
     try:
         Start = min(Keys)
     except:
-        Start = 1;
+        Start = 1
     try:
         End = max(Keys)
     except:
-        End = 0;
+        End = 0
+    print(f"Пары с :{Start} по {End}")
     for i in range(int(Start),int(End) + 1):
-        Lessions = Lessions + f"{i} : {Les.get(str(i), '--------------')}" + "\n"
+        Lessions = Lessions + f"{i} : {Les.get(str(i), '----------')}" + "\n"
     if Lessions == "":
         return("Расписания на этот день нет")
+    elif(w_pari!= ""):
+        Lessions = Lessions +  f"Погода после {End} пары => {int(float(w_pari[int(End)-1]))}℃"
     return(Lessions)
 
 def GetTeacherLession(group, day, week):
@@ -168,10 +175,14 @@ def GetTeacherLession(group, day, week):
         Tomorrow = Tomorrow - 7
     print(f"Tomorrow : {Tomorrow}")
     url = "http://www.tpcol.ru/asu/timetableprep.php?f=1"
-    values = {'fio': group,
-              'day': day,
-              'week' : week}
-    response  = requests.post(url, data=values)
+    values = {
+            'fio': group,
+            'day': day,
+            'week' : week}
+    try:
+        response  = requests.post(url, data=values)
+    except:
+        return("")
     response.encoding = 'cp1251'
     parsed_body = html.fromstring(response.text)
     rasp,zamtood = True,True
@@ -310,39 +321,16 @@ def GetTeacherLession(group, day, week):
     try:
         Start = min(Keys)
     except:
-        Start = 1;
+        Start = 1
     try:
         End = max(Keys)
     except:
-        End = 0;
+        End = 0
     for i in range(int(Start),int(End) + 1):
         Lessions = Lessions + f"{i} : {Les.get(str(i), '--------------')}" + "\n"
     if Lessions == "":
         return("Расписания на этот день нет")
     return(Lessions)
-
-vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
- 
-
-
-
-def send(sendid,sendmessage,keyboard=""):
-    print("Ответ :" + sendmessage) 
-    try:
-        vk.method("messages.send",   {
-                "peer_id": sendid,
-                "random_id": random.randint(1, 9999999999999999),
-                "message": sendmessage,
-                "keyboard": keyboard
-                })
-    except Exception as err:
-        print(err)
-        vk.method("messages.send",   {
-                "peer_id": sendid,
-                "random_id": random.randint(1, 9999999999999999),
-                "message": sendmessage,
-                "keyboard": keyboard
-                })
 
 def GetExams(group):
     url = "http://www.tpcol.ru/asu/exams.php?f=0"
@@ -369,6 +357,24 @@ def GetExams(group):
         return(s)
     else:
         return("Расписание экзаменов для выбранной группы отсутствует!")
+
+def send(sendid,sendmessage,keyboard=""):
+    print("Ответ :" + sendmessage) 
+    try:
+        vk.method("messages.send",   {
+                "peer_id": sendid,
+                "random_id": random.randint(1, 9999999999999999),
+                "message": sendmessage,
+                "keyboard": keyboard
+                })
+    except Exception as err:
+        print(err)
+        vk.method("messages.send",   {
+                "peer_id": sendid,
+                "random_id": random.randint(1, 9999999999999999),
+                "message": sendmessage,
+                "keyboard": keyboard
+                })
 
 
 def GetChat(chat_id):
