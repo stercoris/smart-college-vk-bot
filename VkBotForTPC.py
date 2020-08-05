@@ -40,14 +40,10 @@ print("== Обновление БД Учителей начато == ")
 base.UpdateTeachers()
 print("== Обновление БД Учителей завершено == ")
 print("========================================================== ")
-print("== Обновление БД Групп начато == ")
-base.UpdateGroups()
-print("== Обновление БД Групп завершено == ")
-print("========================================================== ")
 #Обновленя БД
 
 # Запуск рассылки
-subprocess.Popen([sys.executable, 'mailing.py'])
+# subprocess.Popen([sys.executable, 'mailing.py'])
 # Запуск рассылки
 
 error = ["Ашибка", "Еррор", "Ошибка", "Оплошность","просчет"]
@@ -105,7 +101,6 @@ def send(sendid,sendmessage,keyboard=""):
                 "message": sendmessage,
                 "keyboard": keyboard
                 })
-    print("----------------- END ---------------------")
 
 def isadmin(sendid,userid):
     a = GetMembersOfConv(sendid)

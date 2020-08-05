@@ -160,7 +160,7 @@ def GetLession(group, day, week,w_pari=""):
     if Lessions == "":
         return("Расписания на этот день нет")
     elif(w_pari!= ""):
-        Lessions = Lessions +  f"Погода после {End} пары => {int(float(w_pari[int(End)-1]))}℃"
+        Lessions = Lessions +  f"\nПогода после {End} пары => {int(float(w_pari[int(End)-1]))}℃"
     return(Lessions)
 
 def GetTeacherLession(group, day, week):
