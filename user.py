@@ -92,13 +92,16 @@ class User:
             return(False)
 
 
+    
+
+    ## Расписание
+
     today = datetime.datetime.today().weekday() + 1
     tomorrow = datetime.datetime.today().weekday() + 2 
     tomorrow = tomorrow if tomorrow <= 7 else 1
 
-    ## Расписание
+    
     def getSchedule(self, weekday):
-        print(weekday)
         *_, gid = self.UserGroup
         print(gid)
 
@@ -107,9 +110,22 @@ class User:
         lsns = json.loads(lsns.text)
         return(lsns)
 
+    
+    ## Расписание 
+    def getExams(self):
+        *_,gid = self.UserGroup
+
+        data = {'groupid': gid}
+        exams = requests.post('http://wrongdoor.ddns.net/college/getExamsByGroup/',data=data)
+        print(exams)
+        exams = json.loads(exams.text)
+        return(exams)
 
 
 
+
+
+## "ЮНИТ" Тесты!!
 
 user = User(297621144, "Дмитртий", "Родин")
 
@@ -130,3 +146,6 @@ print(user.isInGroupSetup)
 
 print("Расписание : ")
 print(user.getSchedule(user.today))
+
+print("Экзамены : ")
+print(user.getExams())
