@@ -10,7 +10,8 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 
 # Авторизация ВК
-vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
+token = open("token.txt", "r")
+vk = vk_api.VkApi(token=token.read())
 longpoll = vk_api.bot_longpoll.VkBotLongPoll(vk, "184728287")
 # Авторизация ВК
 
