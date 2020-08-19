@@ -14,6 +14,8 @@ vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732b
 longpoll = vk_api.bot_longpoll.VkBotLongPoll(vk, "184728287")
 # Авторизация ВК
 
+
+## В какойта момент база перестала отвечать на запросы, пришлось указать абсолютный путь
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "tpc.db")
 conn = sqlite3.connect(db_path,check_same_thread=False)
@@ -139,7 +141,6 @@ class User:
     ## Расписание 
     def getExams(self):
         *_,gid = self.UserGroup
-
         data = {'groupid': gid}
         exams = requests.post('http://wrongdoor.ddns.net/college/getExamsByGroup/',data=data)
         exams = json.loads(exams.text)
@@ -160,9 +161,14 @@ class User:
             ]
 
         elif(dialstage == self.inScheduleMenu):
+            if(self.isSubedToSchedule):
+                subbtn = GetButton("Отписаться","negative")
+            else:
+                subbtn = GetButton("Подписаться","positive")
+
             buttons = [
-                [GetButton("Сегодня","secondary"),GetButton("Завтра","secondary")],
-                [GetButton('Отписаться' if self.isSubedToSchedule else 'Подписаться',"secondary"),GetButton("Экзамены","secondary")],
+                [GetButton("Сегодня","primary"),GetButton("Завтра","primary")],
+                [subbtn,GetButton("Экзамены","primary")],
                 [GetButton("Главное меню","secondary")]
             ]
 
@@ -178,6 +184,8 @@ class User:
 
     ## Отправка сообщения
     def send(self,message,keyboard=""):
+        if(keyboard == ""):
+            keyboard = self.getUserKeyboard()
         vk.method("messages.send",   {
                 "peer_id": self.userid,
                 "random_id": random.randint(1, 9999999999999999),

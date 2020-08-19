@@ -6,8 +6,12 @@ import time
 import threading
 import user
 
+
+
 # Авторизация ВК
-vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
+## Проверка закрытия данных 
+token = open("token.txt", "r")
+vk = vk_api.VkApi(token=token.read())
 longpoll = vk_api.bot_longpoll.VkBotLongPoll(vk, "184728287")
 # Авторизация ВК
 
@@ -15,11 +19,7 @@ longpoll = vk_api.bot_longpoll.VkBotLongPoll(vk, "184728287")
 # subprocess.Popen([sys.executable, 'mailing.py'])
 # Запуск рассылки
 
-error = ["Ашибка", "Еррор", "Ошибка", "Оплошность","просчет"]
-admin = ["ніяк, прав немає" , "Прав нет да", "Прав а", "Можно права?", "Никак","Дайб прав"]
-ZvonKi = '1 : 8:30 - 10:00  \n 2 : 10:20 - 11:50 \n 3 : 12:20 - 13:50 \n 4 : 14:00 - 15:30 \n 5 : 15:40 - 17:10'
-
-def VkChecking(event):
+def listener(event):
     try:
         if event.type == VkBotEventType.MESSAGE_NEW and event.from_user:
             text = event.object.text.lower()
@@ -29,27 +29,27 @@ def VkChecking(event):
             ## Отмена должна быть сверхуу!1
             if(text == 'отмена' or text == "главное меню"):
                 u.dialstage = u.inMainMenu
-                u.send("Выберите опцию",u.getUserKeyboard())
+                u.send("Выберите опцию")
 
             ## Опции и его дети (Подписки / отписки) (Сегодня / Завтра) (Экзамены)
             elif(text == "опции" and u.dialstage != u.inScheduleMenu):
                 if(u.UserGroup != None):
                     u.dialstage = u.inScheduleMenu
-                    u.send("Выберите опцию",u.getUserKeyboard())
+                    u.send("Выберите опцию")
                 else:
                     u.dialstage = u.inGroupSetup
-                    u.send("Отправте название вашей группы", u.getUserKeyboard())
+                    u.send("Отправте название вашей группы")
 
                 ## Дети "Опций"
             elif(u.dialstage == u.inScheduleMenu):
                     ## Подписки / отписки
                 if(text == "подписаться"):
                     u.isSubedToSchedule = True
-                    u.send("Вы успешно подписались",u.getUserKeyboard())
+                    u.send("Вы успешно подписались")
 
                 elif(text == "отписаться"):
                     u.isSubedToSchedule = False
-                    u.send("Вы успешно отписались",u.getUserKeyboard())
+                    u.send("Вы успешно отписались")
 
                     ## Расписание по дням
                 elif(text == "сегодня"):
@@ -67,13 +67,13 @@ def VkChecking(event):
             ## Установка группы
             elif(text == 'группа' and u.dialstage != u.inGroupSetup):
                 u.dialstage = u.inGroupSetup
-                u.send("Отправте название вашей группы", u.getUserKeyboard())
+                u.send("Отправте название вашей группы")
 
             elif(u.dialstage == u.inGroupSetup):
                 try:
                     u.UserGroup = text
                     u.dialstage = u.inScheduleMenu
-                    u.send("Выберите опцию",u.getUserKeyboard())
+                    u.send("Выберите опцию")
                 except:
                     u.send("Такой группы не найдено")
 
@@ -84,15 +84,15 @@ while True:
         try:
             try:
                 for event in longpoll.check():
-                    x = threading.Thread(target=VkChecking, args=(event,))
+                    x = threading.Thread(target=listener, args=(event,))
                     x.start()
             except Exception as err:
-                vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
+                vk = vk_api.VkApi(token=token.read())
                 print(err)
-                print("123123123 CRIT ERRROR 123123123")
+                ## Иногда пропадает соединение с сервером
         except Exception as err:
-            vk = vk_api.VkApi(token="14266f2aa070b5f57c9f88496514449211e1ad114c76edf7832732be96483b24bc59762dbba5da4956505")
+            vk = vk_api.VkApi(token=token.read())
             print(err)
-            print("123123123 CRIT ERRROR 123123123")
+            ## А иногда вырубается инет или меняется динамический ip
             time.sleep(60)
     
