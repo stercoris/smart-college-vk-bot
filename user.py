@@ -46,6 +46,8 @@ class User:
     inMainMenu = 0
     inScheduleMenu = 1
     inGroupSetup = 2
+    inTestInput = 3
+    inTestSelect = 4
 
     @property
     def dialstage(self):
@@ -124,11 +126,16 @@ class User:
     
 
     ## Расписание
-    today = datetime.datetime.today().weekday() + 1
-    tomorrow = datetime.datetime.today().weekday() + 2 
-    tomorrow = tomorrow if tomorrow <= 7 else 1
+    def today(self):
+        today = datetime.datetime.today().weekday() + 1
+        return(today)
 
-    def getSchedule(self, weekday):
+    def tomorrow(self):
+        tomorrow = datetime.datetime.today().weekday() + 2 
+        tomorrow = tomorrow if tomorrow <= 7 else 1
+        return(tomorrow)
+
+    def getSchedule(self, weekday,raw=False):
         *_, gid = self.UserGroup
         data = {'groupid': gid,'day': weekday}
         lsns = requests.post('http://wrongdoor.ddns.net/college/getLsnByGroup/',data=data)
@@ -136,16 +143,33 @@ class User:
         if(len(lsns) == 0):
             return(None)
         else: 
-            return(lsns)
+            if(raw):
+                return(lsns)
+            
+            ## Нормализация
+            text = ""
+            for lsn in lsns:
+                text += f"{lsn['id']} - {lsn['title']}\n"
+            return(text)
+
+
+
 
     
     ## Расписание 
-    def getExams(self):
+    def getExams(self,raw=False):
         *_,gid = self.UserGroup
         data = {'groupid': gid}
         exams = requests.post('http://wrongdoor.ddns.net/college/getExamsByGroup/',data=data)
         exams = json.loads(exams.text)
-        return(exams)
+        if(raw):
+            return(exams)
+
+        ## Нормализация
+        text = ""
+        for exam in exams:
+            text += f"{exam['date']} | {exam['les']}\n{exam['teacher']} | {exam['cab']}\n-----------\n"
+        return(text)
 
 
     ## Клавиатуры
@@ -172,16 +196,15 @@ class User:
                 [subbtn,GetButton("Экзамены","primary")],
                 [GetButton("Главное меню","secondary")]
             ]
-
-
-
-        KeyboardSubToSchedule = {
+        Keyboard = {
             "one_time": False,
             "buttons" : buttons
             }
-        KeyboardSubToSchedule = json.dumps(KeyboardSubToSchedule, ensure_ascii=False).encode("utf-8")
-        KeyboardSubToSchedule = str(KeyboardSubToSchedule.decode("utf-8"))
-        return(KeyboardSubToSchedule)
+        Keyboard = json.dumps(Keyboard, ensure_ascii=False).encode("utf-8")
+        Keyboard = str(Keyboard.decode("utf-8"))
+        return(Keyboard)
+
+
 
     ## Отправка сообщения
     def send(self,message,keyboard=""):
@@ -201,57 +224,8 @@ def GetButton(label, color):
         "action": {
             "type":"text",
             "label": label,
-            "payload": json.dumps(label)
+            "payload": [] #json.dumps(label) 
             },
         "color": color
         }
 
-
-## "ЮНИТ" Тесты!!
-
-
-#Id пользователя вк
-userid = 297621144 ##Родин Д митрий(Я)
-
-
-
-# user = User(userid)
-
-
-# print("Подписан на расписание?")
-# user.isSubedToSchedule = user.signedToSchedule
-# print(user.isSubedToSchedule)
-
-# print("Группа пользователя('вп31')")
-# try:
-#     user.UserGroup = "вп31"
-#     gname, id = user.UserGroup
-#     print(gname)
-#     print(id)
-# except GroupNotFound : 
-#     print("Группа не найдена")
-
-
-# print("В стадии диалога изменения группы?")
-# print(user.dialstage)
-
-
-# print("Расписание : ")
-# print(user.getSchedule(user.today))
-
-# print("> Экзамены")
-# exams = user.getExams()
-# ##print(exams)
-
-
-# print("> Клавиатура")
-# keyboard = user.getUserKeyboard()
-# ##print(keyboard)
-
-
-# import vk_api
-# from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
-
-
-
-# user.send("test",user.getUserKeyboard())
