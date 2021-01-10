@@ -1,2 +1,6 @@
 token.txt
 token.txt
+test.db
+tpc.db
+!test.db
+!tpc.db
