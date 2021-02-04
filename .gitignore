@@ -3,4 +3,4 @@ tests.db
 tpc.db
 __pycache__/
 *.pyc
-!__pycache__/
+
