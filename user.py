@@ -23,7 +23,7 @@ conn = sqlite3.connect(db_path,check_same_thread=False)
 conn.row_factory = sqlite3.Row
 cursor = conn.cursor()
 
-
+hostname = "host.docker.internal"
 
 
 
@@ -77,7 +77,7 @@ class User:
     @UserGroup.setter
     def UserGroup(self, RawGroup):
         data = {'fname': RawGroup}
-        group = requests.post('http://wrongdoor.ddns.net/college/getGroupByName/',data=data)
+        group = requests.post(f'http://{hostname}/college/getGroupByName/',data=data)
         try:
             group = dict(json.loads(group.text))
             command = f"UPDATE VkUsers SET GroupName = '{group['name']}',GroupId = {str(group['id'])} WHERE VkId = '{str(self.userid)}'"
@@ -138,7 +138,7 @@ class User:
     def getSchedule(self, weekday,raw=False):
         *_, gid = self.UserGroup
         data = {'groupid': gid,'day': weekday}
-        lsns = requests.post('http://wrongdoor.ddns.net/college/getLsnByGroup/',data=data)
+        lsns = requests.post(f'http://{hostname}/college/getLsnByGroup/',data=data)
         lsns = json.loads(lsns.text)
         if(len(lsns) == 0):
             return(None)
@@ -160,7 +160,7 @@ class User:
     def getExams(self,raw=False):
         *_,gid = self.UserGroup
         data = {'groupid': gid}
-        exams = requests.post('http://wrongdoor.ddns.net/college/getExamsByGroup/',data=data)
+        exams = requests.post(f'http://{hostname}/college/getExamsByGroup/',data=data)
         exams = json.loads(exams.text)
         if(raw):
             return(exams)
