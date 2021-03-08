@@ -14,7 +14,7 @@ COPY . /vk-bot
 RUN pip install -r requirements.txt
 
 # set timezone
-ENV TZ=Europe/Moscow
+ENV TZ=Europe/Samara
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # command to run on container start
