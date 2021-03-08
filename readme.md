@@ -1,9 +1,15 @@
 # Prorok SUN---Boy VkBot
 
+### Это бот на vk-api, прикрепенный к [PHP Rest-Апишке](https://github.com/stercoris/old-tpcol-api), а в будущем [TypeScript GraphQL-Апишке](https://github.com/stercoris/tpcol-api), который,через удобный интерфейс, позволяет:
+ - Подписываться на рассылку расписания
+ - Смотреть экзамены
+ - Смотреть расписание на Завтра/Сегодня
+ - я тоже думал, что тут больше будет
+
 Todos:
   - Менее громоздкий докер
   - token.txt => .env
-  - database_create.py
+  - database_create.py / ORM
   - погода
 
 Библиотеки:
